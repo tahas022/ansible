@@ -332,3 +332,44 @@ def test_numeric():
     assert not _Numeric(2) <= _Numeric(1)  # pylint: disable=unneeded-not
     assert _Numeric(2) > _Numeric(1)
     assert _Numeric(2) >= _Numeric(1)
+
+def test_from_loose_version_coverage():
+    assert SemanticVersion.from_loose_version(LooseVersion('1.2.3-alpha+build')) == SemanticVersion('1.2.3-alpha+build')
+    assert SemanticVersion.from_loose_version(LooseVersion('1.2.3+build-alpha')) == SemanticVersion('1.2.3+build-alpha')
+    assert SemanticVersion.from_loose_version(LooseVersion('1.2.3-alpha')) == SemanticVersion('1.2.3-alpha')
+    assert SemanticVersion.from_loose_version(LooseVersion('1.2.3+build')) == SemanticVersion('1.2.3+build')
+    assert SemanticVersion.from_loose_version(LooseVersion('1')) == SemanticVersion('1.0.0') # Empty version in LooseVersion
+    with pytest.raises(ValueError):
+        SemanticVersion.from_loose_version(LooseVersion('1.a.2-beta')) # Non-int component before extra
+
+def test_parse_coverage():
+    with pytest.raises(ValueError):
+        SemanticVersion("1.a.0")
+    with pytest.raises(ValueError):
+        SemanticVersion("1.1.b")
+    with pytest.raises(ValueError):
+        SemanticVersion(" 1.0.0") # Whitespace
+    with pytest.raises(ValueError):
+        SemanticVersion("1.0.0 ")
+    with pytest.raises(ValueError):
+        SemanticVersion("1 .0.0")
+
+def test_cmp_coverage():
+    assert SemanticVersion("1.0.0") > SemanticVersion("1.0.0-alpha")
+    assert SemanticVersion("1.0.0+build") == SemanticVersion("1.0.0") # Build metadata should be ignored
+    assert SemanticVersion("1.0.0") == SemanticVersion("1.0.0") # Both empty
+    assert SemanticVersion("1.0.0-alpha") < SemanticVersion("1.0.0-beta")
+    assert SemanticVersion("1.0.0-alpha+build1") < SemanticVersion("1.0.0-beta+build2")
+
+def test_property_coverage():
+    v = SemanticVersion("1.2.3-alpha+build")
+    assert v.core == (1, 2, 3)
+    assert v.is_prerelease is True
+    assert v.is_stable is False
+    v2 = SemanticVersion("1.2.3")
+    assert v2.is_stable is True
+
+def test_repr_str():
+    v = SemanticVersion("1.2.3-alpha+build")
+    assert eval(repr(v)) == v
+    assert str(v) == "1.2.3-alpha+build" # Or whatever your __str__ should return
