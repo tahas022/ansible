@@ -464,3 +464,58 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ["some_vault_id"])[0][1]
         self.assertEqual(match.bytes, b"prompt1_password")
+
+    def test_no_vault_ids_and_auto_prompt(self):
+        # Test with no vault ids and auto_prompt=True
+        res = cli.CLI.setup_vault_secrets(
+            loader=self.fake_loader,
+            vault_ids=[],
+            auto_prompt=True,
+        )
+        self.assertEqual(len(res), 1)  # Should auto-prompt for a vault id
+
+    def test_invalid_vault_file(self):
+        # Test with an invalid vault password file (e.g., file that doesn't exist)
+        filename = "/invalid/path/secret"
+        with self.assertRaises(FileNotFoundError):
+            cli.CLI.setup_vault_secrets(
+                loader=self.fake_loader,
+                vault_ids=[f"invalid@{filename}"],
+                vault_password_files=[filename],
+            )
+
+    def test_conflicting_flags_create_new_password_and_ask_vault_pass(self):
+        # Test when both create_new_password and ask_vault_pass are True (conflict)
+        res = cli.CLI.setup_vault_secrets(
+            loader=self.fake_loader,
+            vault_ids=["prompt1@prompt"],
+            create_new_password=True,
+            ask_vault_pass=True,
+        )
+        self.assertEqual(len(res), 1)
+        matches = vault.match_secrets(res, ["prompt1"])
+        self.assertEqual(matches[0][1].bytes, b"prompt1_password")
+
+    def test_mixed_vault_ids_with_invalid_and_valid_ids(self):
+        # Test where some vault ids are valid and some are invalid
+        res = cli.CLI.setup_vault_secrets(
+            loader=self.fake_loader,
+            vault_ids=["valid@prompt", "invalid@/invalid/path"],
+            ask_vault_pass=False,
+        )
+        self.assertEqual(len(res), 1)  # Should only match valid vault ids
+
+    def test_no_tty_with_no_auto_prompt(self):
+        # Test when no TTY is available and auto_prompt is not set
+        self.mock_isatty.return_value = False
+        res = cli.CLI.setup_vault_secrets(
+            loader=self.fake_loader,
+            vault_ids=["prompt1@prompt"],
+            ask_vault_pass=False,
+            auto_prompt=False,
+        )
+        self.assertEqual(
+            len(res), 1
+        )  # Should not auto-prompt and return a list of vault ids
+        matches = vault.match_secrets(res, ["prompt1"])
+        self.assertEqual(matches[0][1].bytes, b"prompt1_password")
