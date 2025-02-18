@@ -84,3 +84,47 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
                 _filter_non_json_lines,
                 data=i
             )
+
+    def test_empty_input(self):  # Test with an empty string
+        filtered, warnings = _filter_non_json_lines("")
+        self.assertEqual(filtered, "")  # Or assert it's None, or whatever your function returns
+        self.assertEqual(warnings, [])
+
+    def test_whitespace_only(self): # Test with only whitespace
+        filtered, warnings = _filter_non_json_lines("   \n\t  ")
+        self.assertEqual(filtered, "") # Or None, or original whitespace if that's the desired behaviour
+        self.assertEqual(warnings, [])
+
+    def test_json_with_internal_junk(self): # Test with junk *inside* the JSON, but still valid structure
+        json_with_junk = u"""{"key": "value\n junk", "olá": "mundo"}"""
+        filtered, warnings = _filter_non_json_lines(json_with_junk)
+        self.assertEqual(filtered, json_with_junk)  # Or perhaps you want to filter this kind of junk too?
+        self.assertEqual(warnings, [])  # Or warnings if you decide to handle this case
+
+    def test_json_with_unicode_surrogates(self):
+        json_with_surrogates = u"""{"key": "\\ud83d\\ude00"}"""  # Smiling face emoji
+        filtered, warnings = _filter_non_json_lines(json_with_surrogates)
+        self.assertEqual(filtered, json_with_surrogates)
+        self.assertEqual(warnings, [])
+
+    def test_mixed_junk_and_json(self):  # More complex mixed input
+        mixed_input = u"""junk before\n{"key": "value"}\njunk after"""
+        filtered, warnings = _filter_non_json_lines(mixed_input)
+        self.assertEqual(filtered, u"""{"key": "value"}""")
+        self.assertEqual(warnings, [u"Module invocation had junk after the JSON data: junk after"])
+
+    def test_json_with_escaped_characters(self):
+        json_with_escapes = u"""{"key": "val\\\"ue", "olá": "mun\\ndo"}"""
+        filtered, warnings = _filter_non_json_lines(json_with_escapes)
+        self.assertEqual(filtered, json_with_escapes)
+        self.assertEqual(warnings, [])
+
+    def test_empty_json_object(self): # Test with an empty json object
+        filtered, warnings = _filter_non_json_lines("{}")
+        self.assertEqual(filtered, "{}")
+        self.assertEqual(warnings, [])
+
+    def test_empty_json_array(self): # Test with an empty json array
+        filtered, warnings = _filter_non_json_lines("[]")
+        self.assertEqual(filtered, "[]")
+        self.assertEqual(warnings, [])
