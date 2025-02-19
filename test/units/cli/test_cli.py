@@ -33,6 +33,8 @@ import os
 from ansible.parsing.dataloader import DataLoader
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
+import pytest
+
 
 class DictDataLoader(DataLoader):
 
@@ -570,7 +572,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         # My change: Wrong length for assertion
         self.assertEqual(len(res), 2)
         matches = vault.match_secrets(res, ["prompt1"])
-        # This is the password to enter (prompt1_password)
+        # This is the password to enter
         self.assertEqual(matches[0][1].bytes, b"prompt1_password")
 
     def test_mixed_vault_ids_with_invalid_and_valid_ids(self):
@@ -596,3 +598,16 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         )  # Should not auto-prompt and return a list of vault ids
         matches = vault.match_secrets(res, ["prompt1"])
         self.assertEqual(matches[0][1].bytes, b"prompt1_password")
+
+    # Manually Added Test Cases
+    def test_split_id(self):
+        res = cli.CLI.split_vault_id(["foo@bar"])
+        self.assertEqual(res, (None, ["foo@bar"]))
+
+    def test_get_secret(self):
+        res = cli.CLI._get_secret("Enter password:")
+        assert res == "input"
+
+    def test_get_password_from_file(self):
+        with pytest.raises(AnsibleError):
+            assert cli.CLI.get_password_from_file("fake-file.txt")
