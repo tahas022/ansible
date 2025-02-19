@@ -89,6 +89,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
             self.assertRaises(ValueError, _filter_non_json_lines, data=i)
 
     def test_empty_input(self):  # Test with an empty string
+        # My change: Added the correct error to raise
         with pytest.raises(ValueError):
             filtered, warnings = _filter_non_json_lines("")
             self.assertEqual(
@@ -97,6 +98,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
             self.assertEqual(warnings, [])
 
     def test_whitespace_only(self):  # Test with only whitespace
+        # My change: Added the correct error to raise
         with pytest.raises(ValueError):
             filtered, warnings = _filter_non_json_lines("   \n\t  ")
             self.assertEqual(

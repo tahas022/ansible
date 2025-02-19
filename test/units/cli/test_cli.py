@@ -567,8 +567,10 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
             create_new_password=True,
             ask_vault_pass=True,
         )
+        # My change: Wrong length for assertion
         self.assertEqual(len(res), 2)
         matches = vault.match_secrets(res, ["prompt1"])
+        # This is the password to enter (prompt1_password)
         self.assertEqual(matches[0][1].bytes, b"prompt1_password")
 
     def test_mixed_vault_ids_with_invalid_and_valid_ids(self):

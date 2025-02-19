@@ -399,6 +399,7 @@ def test_property_coverage():
 def test_repr_str():
     v = SemanticVersion("1.2.3-alpha+build")
     assert eval(repr(v)) == v
+    # My change: Fixed string to proper string
     assert (
         str(v) == "SemanticVersion('1.2.3-alpha+build')"
     )  # Or whatever your __str__ should return
