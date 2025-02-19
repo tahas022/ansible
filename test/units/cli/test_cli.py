@@ -600,13 +600,14 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertEqual(matches[0][1].bytes, b"prompt1_password")
 
     # Manually Added Test Cases
-    def test_split_id(self):
-        res = cli.CLI.split_vault_id(["foo@bar"])
-        self.assertEqual(res, (None, ["foo@bar"]))
 
     def test_get_secret(self):
         res = cli.CLI._get_secret("Enter password:")
         assert res == "input"
+
+    def test_split_id(self):
+        res = cli.CLI.split_vault_id(["foo@bar"])
+        self.assertEqual(res, (None, ["foo@bar"]))
 
     def test_get_password_from_file(self):
         with pytest.raises(AnsibleError):
